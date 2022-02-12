@@ -1,6 +1,6 @@
 {
   "name": "@devil7softwares/eslint-plugin-axios-swagger",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "ESLint plugin to lint routes used in the app with axios using swagger spec.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
