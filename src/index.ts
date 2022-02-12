@@ -1,4 +1,4 @@
-import { NoUnknownRoute } from './rules';
+import { NoUnknownRoute, NoUnsupportedMethod } from './rules';
 
 export = {
     rules: {
@@ -7,6 +7,13 @@ export = {
                 hasSuggestions: true,
             },
             create: NoUnknownRoute,
+        },
+        'no-unsupported-method': {
+            meta: {
+                fixable: 'code',
+                hasSuggestions: true,
+            },
+            create: NoUnsupportedMethod,
         },
     },
 };

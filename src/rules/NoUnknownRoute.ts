@@ -2,7 +2,7 @@ import { Rule } from 'eslint';
 import Fuze from 'fuse.js';
 
 import { getSpecs } from '../SpecStore';
-import { escapeForRegExp, getRouteArg, getSettings } from '../Utils';
+import { escapeForRegExp, getRouteArg, getSettings, parseRouteArg } from '../Utils';
 
 export function NoUnknownRoute(context: Rule.RuleContext): Rule.RuleListener {
     const settings = getSettings(context.settings);
@@ -15,37 +15,22 @@ export function NoUnknownRoute(context: Rule.RuleContext): Rule.RuleListener {
             const routeArg = getRouteArg(node);
 
             if (routeArg) {
-                let routeOriginalValue = '';
-                let route = '';
-                let quoteChar = '`';
+                const parsedRoute = parseRouteArg(routeArg, context);
 
-                if (
-                    routeArg.type === 'Literal' &&
-                    typeof routeArg.value === 'string' &&
-                    typeof routeArg.raw === 'string'
-                ) {
-                    quoteChar = routeArg.raw.charAt(0);
-                    routeOriginalValue = routeArg.value;
-                    route = routeOriginalValue.split('?')[0];
-                } else if (routeArg.type === 'TemplateLiteral') {
-                    routeOriginalValue = context.getSourceCode().getText(routeArg).replace(/`/g, '');
-                    route = routeOriginalValue.split('?')[0].replace(/\$\{.*?\}/g, '${}');
-                }
-
-                if (!routeOriginalValue || !route) {
+                if (!parsedRoute.value || !parsedRoute.raw) {
                     return;
                 }
 
-                const routeWithBase = `${settings.basePath}${route}`;
+                const routeWithBase = `${settings.basePath}${parsedRoute.value}`;
 
-                if (!specs.has(route) && !specs.has(routeWithBase)) {
+                if (!specs.has(parsedRoute.value) && !specs.has(routeWithBase)) {
                     const matchWithBase = fuze.search(routeWithBase)[0];
-                    const matchWithoutBase = fuze.search(route)[0];
+                    const matchWithoutBase = fuze.search(parsedRoute.value)[0];
 
                     const report: Rule.ReportDescriptor = {
                         node,
                         loc: routeArg.loc || node.loc || { line: 0, column: 0 },
-                        message: `Specified route '${route}'${
+                        message: `Specified route '${parsedRoute.value}'${
                             settings.basePath ? ` or '${routeWithBase}'` : ''
                         } not found!`,
                     };
@@ -58,10 +43,10 @@ export function NoUnknownRoute(context: Rule.RuleContext): Rule.RuleListener {
                                     : matchWithoutBase
                                 : matchWithoutBase || matchWithBase;
 
-                        if (/\$\{.*?\}/g.test(match.item)) quoteChar = '`';
+                        if (/\$\{.*?\}/g.test(match.item)) parsedRoute.quoteChar = '`';
 
-                        const templateMatches = routeOriginalValue.matchAll(/\$\{(.*?)\}/g);
-                        const newPath = `${quoteChar}${(match.item.includes('${}')
+                        const templateMatches = parsedRoute.raw.matchAll(/\$\{(.*?)\}/g);
+                        const newPath = `${parsedRoute.quoteChar}${(match.item.includes('${}')
                             ? match.item.replace(/\$\{\}/g, function (str) {
                                   const templateMatch = templateMatches.next();
                                   if (templateMatch.value) {
@@ -72,8 +57,8 @@ export function NoUnknownRoute(context: Rule.RuleContext): Rule.RuleListener {
                               })
                             : match.item
                         ).replace(new RegExp(`^${escapeForRegExp(settings.basePath || '')}`, 'g'), '')}${
-                            routeOriginalValue.includes('?') ? `?${routeOriginalValue.split('?')[1]}` || '' : ''
-                        }${quoteChar}`;
+                            parsedRoute.raw.includes('?') ? `?${parsedRoute.raw.split('?')[1]}` || '' : ''
+                        }${parsedRoute.quoteChar}`;
 
                         report.suggest = [
                             {
