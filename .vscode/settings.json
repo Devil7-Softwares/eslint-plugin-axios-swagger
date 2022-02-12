@@ -1,7 +1,10 @@
 {
-    "editor.codeActionsOnSave": {
-        "source.fixAll": true
-    },
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": "file:///home/devil7dk/Projects/eslint-plugin-swagger/.github/workflows/build.yml"
+  }
 }
